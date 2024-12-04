@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>時間読みクイズ</title>
+  <style>
+    :root {
+      --primary-color: #af9f67;
+      --hour-color: #d62c36;
+      --minute-color: #3d5d8b;
+      --clock-color-primary: #0d0015;
+      --clock-color-secondary: #8b968d;
+      --font-color: #0d0015;
+      --success-color: #28a745;
+      --background-color:  #adab971a;
+      --error-color: #dc3545;
+      --shadow-color: rgba(0, 0, 0, 0.1);
+    }
+
+    body {
+      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+      text-align: center;
+      margin: 0;
+      padding: 20px;
+      background: var(--background-color);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    h1 {
+      color: #2c3e50;
+      margin-bottom: 2rem;
+      font-size: 2.5rem;
+    }
+
+    #clock-container {
+      margin: 20px auto;
+      display: flex;
+      justify-content: center;
+    }
+
+    #clock {
+      position: relative;
+      width: 300px;
+      height: 300px;
+      border: 8px solid var(--clock-color-primary);
+      border-radius: 50%;
+      background: white;
+      box-shadow: 0 4px 20px var(--shadow-color);
+      transition: all 0.3s ease;
+    }
+
+    .hand {
+      position: absolute;
+      background: #2c3e50;
+      transform-origin: bottom;
+      transform: translateX(-50%);
+      transition: transform 0.5s cubic-bezier(0.4, 2.08, 0.55, 0.44);
+      border-radius: 4px;
+    }
+
+    .minute {
+      background: var(--minute-color);
+    }
+
+    .hour {
+      background: var(--hour-color);
+    }
+
+
+    .hour {
+      width: 8px;
+      height: 80px;
+      top: 70px;
+      left: 50%;
+    }
+
+    .minute {
+      width: 4px;
+      height: 120px;
+      top: 30px;
+      left: 50%;
+    }
+
+    .number {
+      position: absolute;
+      font-size: 24px;
+      font-weight: bold;
+      color: var(--font-color);
+    }
+
+    .tick {
+      position: absolute;
+      background: var(--clock-color-secondary);
+      width: 2px;
+      height: 10px;
+      z-index: 1;
+    }
+
+    .long-tick {
+      height: 15px;
+      width: 3px;
+      background: var(--clock-color-primary);
+    }
+
+    #digital-clock {
+      font-size: 36px;
+      font-weight: bold;
+      color: #b8d200;
+      background: black; /* Change background to black */
+      padding: 20px 40px;
+      border-radius: 10px;
+      box-shadow: 0 4px 20px var(--shadow-color);
+      display: none;
+      margin: 20px 0;
+      z-index: 10;
+      font-family: 'Courier New', Courier, monospace; /* Use a monospace font for a digital clock look */
+      letter-spacing: 2px; /* Add spacing for a more authentic digital style */
+    }
+
+
+    #answers {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 15px;
+      margin: 30px auto;
+      max-width: 600px;
+    }
+
+    .answer {
+      background: white;
+      padding: 15px 25px;
+      border: 2px solid var(--primary-color);
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 1rem;
+      font-weight: bold;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 10px var(--shadow-color);
+    }
+
+    .answer:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px var(--shadow-color);
+    }
+
+    .answer.correct {
+      background-color: var(--success-color);
+      color: white;
+      border-color: var(--success-color);
+    }
+
+    .answer.wrong {
+      background-color: var(--error-color);
+      color: white;
+      border-color: var(--error-color);
+    }
+
+    .answer .hour-part {
+      color: var(--hour-color);
+    }
+
+    .answer .minute-part {
+      color: var(--minute-color);
+    }
+
+    .answer.correct .hour-part,
+    .answer.correct .minute-part,
+    .answer.wrong .hour-part,
+    .answer.wrong .minute-part {
+      color: white;
+    }
+
+    .feedback {
+      font-size: 56px; /* Increase font size for better visibility */
+      font-weight: bold;
+      position: fixed; /* Use fixed position to float at the top */
+      top: 10%; /* Position near the top of the screen */
+      left: 50%; /* Center horizontally */
+      transform: translateX(-50%); /* Center adjustment */
+      visibility: hidden; /* Reserve space while keeping it invisible */
+      opacity: 0;
+      transition: opacity 0.3s ease, visibility 0s 0.3s;
+      z-index: 1000;
+      padding: 20px 40px; /* Add more padding for better spacing */
+      background: rgba(255, 255, 255, 0.8); /* Transparent white background */
+      border-radius: 10px; /* Rounded corners for a polished look */
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5); /* Add a subtle shadow */
+      text-align: center;
+    }
+
+    .feedback.show {
+      visibility: visible;
+      opacity: 1;
+      transition: opacity 0.3s ease;
+    }
+
+
+
+    .feedback.correct {
+      color: var(--success-color);
+    }
+
+    .feedback.wrong {
+      color: var(--error-color);
+    }
+
+    .button-group {
+      display: flex;
+      gap: 15px;
+      margin-top: 30px;
+    }
+
+    button {
+      background: var(--primary-color);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 10px var(--shadow-color);
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px var(--shadow-color);
+    }
+
+
+  </style>
+</head>
+<body>
+  <h1>なんじですか?</h1>
+  <div id="clock-container">
+    <div id="clock">
+      <div class="hand hour" id="hour-hand"></div>
+      <div class="hand minute" id="minute-hand"></div>
+<div class="number" style="top: 2.5%; left: 50%; transform: translate(-50%, 0);">12</div>
+<div class="number" style="top: 15%; left: 70%; transform: translate(-50%, -50%);">1</div>
+<div class="number" style="top: 30%; left: 85%; transform: translate(-50%, -50%);">2</div>
+<div class="number" style="top: 50%; left: 90%; transform: translate(-50%, -50%);">3</div>
+<div class="number" style="top: 70%; left: 85%; transform: translate(-50%, -50%);">4</div>
+<div class="number" style="top: 85%; left: 70%; transform: translate(-50%, -50%);">5</div>
+<div class="number" style="top: 90%; left: 50%; transform: translate(-50%, -50%);">6</div>
+<div class="number" style="top: 85%; left: 30%; transform: translate(-50%, -50%);">7</div>
+<div class="number" style="top: 65%; left: 15%; transform: translate(-50%, 0);">8</div>
+<div class="number" style="top: 50%; left: 10%; transform: translate(-50%, -50%);">9</div>
+<div class="number" style="top: 30%; left: 15%; transform: translate(-50%, -50%);">10</div>
+<div class="number" style="top: 15%; left: 30%; transform: translate(-50%, -50%);">11</div>
+    </div>
+  </div>
+  <div id="digital-clock"></div>
+  <div class="button-group">
+    <button id="reset-btn">Reset</button>
+    <button id="toggle-btn">Switch to Digital Clock</button>
+    <button id="hint-btn">Hint</button>
+  </div>
+  <div class="feedback" id="feedback"> </div>
+  <div id="answers"></div>
+
+
+  <script>
+    const hiraganaNumbersHours = {
+      0: 'れい',
+      1: 'いち',
+      2: 'に',
+      3: 'さん',
+      4: 'よ',
+      5: 'ご',
+      6: 'ろく',
+      7: 'しち',
+      8: 'はち',
+      9: 'く',
+      10: 'じゅう',
+      11: 'じゅういち',
+      12: 'じゅうに'
+    };
+
+
+const hiraganaNumbersMinutes = {
+  0: '',
+  1: 'いっぷん',
+  2: 'にふん',
+  3: 'さんぷん',
+  4: 'よんぷん',
+  5: 'ごふん',
+  6: 'ろっぷん',
+  7: 'ななふん',
+  8: 'はっぷん',
+  9: 'きゅうふん',
+  10: 'じゅっぷん',
+  11: 'じゅういっぷん',
+  12: 'じゅうにふん',
+  13: 'じゅうさんぷん',
+  14: 'じゅうよんぷん',
+  15: 'じゅうごふん',
+  16: 'じゅうろっぷん',
+  17: 'じゅうななふん',
+  18: 'じゅうはっぷん',
+  19: 'じゅうきゅうふん',
+  20: 'にじゅっぷん',
+  21: 'にじゅういっぷん',
+  22: 'にじゅうにふん',
+  23: 'にじゅうさんぷん',
+  24: 'にじゅうよんぷん',
+  25: 'にじゅうごふん',
+  26: 'にじゅうろっぷん',
+  27: 'にじゅうななふん',
+  28: 'にじゅうはっぷん',
+  29: 'にじゅうきゅうふん',
+  30: 'さんじゅっぷん',
+  31: 'さんじゅういっぷん',
+  32: 'さんじゅうにふん',
+  33: 'さんじゅうさんぷん',
+  34: 'さんじゅうよんぷん',
+  35: 'さんじゅうごふん',
+  36: 'さんじゅうろっぷん',
+  37: 'さんじゅうななふん',
+  38: 'さんじゅうはっぷん',
+  39: 'さんじゅうきゅうふん',
+  40: 'よんじゅっぷん',
+  41: 'よんじゅういっぷん',
+  42: 'よんじゅうにふん',
+  43: 'よんじゅうさんぷん',
+  44: 'よんじゅうよんぷん',
+  45: 'よんじゅうごふん',
+  46: 'よんじゅうろっぷん',
+  47: 'よんじゅうななふん',
+  48: 'よんじゅうはっぷん',
+  49: 'よんじゅうきゅうふん',
+  50: 'ごじゅっぷん',
+  51: 'ごじゅういっぷん',
+  52: 'ごじゅうにふん',
+  53: 'ごじゅうさんぷん',
+  54: 'ごじゅうよんぷん',
+  55: 'ごじゅうごふん',
+  56: 'ごじゅうろっぷん',
+  57: 'ごじゅうななふん',
+  58: 'ごじゅうはっぷん',
+  59: 'ごじゅうきゅうふん'
+};
+
+
+    const clockElement = document.getElementById('clock');
+    const hourHand = document.getElementById('hour-hand');
+    const minuteHand = document.getElementById('minute-hand');
+    const digitalClockElement = document.getElementById('digital-clock');
+    const answersContainer = document.getElementById('answers');
+    const resetButton = document.getElementById('reset-btn');
+    const toggleButton = document.getElementById('toggle-btn');
+    const hintButton = document.getElementById('hint-btn');
+    const feedbackElement = document.getElementById('feedback');
+
+    let correctAnswer;
+    let currentTime;
+    let isAnalog = true;
+
+    function formatTimeHiragana(hour, minute) {
+      if (hour === 0) hour = 12;
+      const hourText = hour === 12 ? 'じゅうにじ' : `${hiraganaNumbersHours[hour]}じ`;
+      const minuteText = hiraganaNumbersMinutes[minute];
+      return `<span class="hour-part">${hourText}</span>${minuteText ? ' ' : ''}<span class="minute-part">${minuteText}</span>`;
+    }
+
+    function showFeedback(isCorrect) {
+      feedbackElement.textContent = isCorrect ? '〇' : '×';
+      feedbackElement.className = `feedback show ${isCorrect ? 'correct' : 'wrong'}`;
+      setTimeout(() => {
+        feedbackElement.className = 'feedback';
+      }, 2000);
+    }
+
+    function randomTime() {
+      const hour = Math.floor(Math.random() * 12) + 1;
+      const minute = Math.floor(Math.random() * 60);
+      return { hour, minute };
+    }
+
+    function updateClock({ hour, minute }) {
+      const hourAngle = (hour % 12) * 30 + minute / 2;
+      const minuteAngle = minute * 6;
+      hourHand.style.transform = `rotate(${hourAngle}deg)`;
+      minuteHand.style.transform = `rotate(${minuteAngle}deg)`;
+      digitalClockElement.textContent = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+    }
+
+    function reset() {
+      currentTime = randomTime();
+      correctAnswer = formatTimeHiragana(currentTime.hour, currentTime.minute);
+      updateClock(currentTime);
+      renderAnswers(currentTime.hour, currentTime.minute);
+      feedbackElement.className = 'feedback';
+    }
+
+    function renderAnswers(correctHour, correctMinute) {
+      const correctTimeText = formatTimeHiragana(correctHour, correctMinute);
+      const options = new Set([correctTimeText]);
+      
+      while (options.size < 4) {
+        const randomHour = Math.floor(Math.random() * 12) + 1;
+        const randomMinute = Math.floor(Math.random() * 60);
+        options.add(formatTimeHiragana(randomHour, randomMinute));
+      }
+      
+      answersContainer.innerHTML = Array.from(options)
+        .sort(() => Math.random() - 0.5)
+        .map(answer => `<div class="answer">${answer}</div>`)
+        .join('');
+
+      document.querySelectorAll('.answer').forEach(answer => {
+        answer.addEventListener('click', () => {
+          const plainText = answer.textContent;
+          const correctPlainText = document.createElement('div');
+          correctPlainText.innerHTML = correctTimeText;
+          checkAnswer(plainText === correctPlainText.textContent, answer);
+        });
+      });
+    }
+
+function checkAnswer(isCorrect, answerElement) {
+  const allAnswers = document.querySelectorAll('.answer');
+  allAnswers.forEach(ans => ans.style.pointerEvents = 'none');
+
+  const correctAnswerElement = [...allAnswers].find(ans => {
+    const div = document.createElement('div');
+    div.innerHTML = correctAnswer;
+    return ans.textContent === div.textContent;
+  });
+
+  if (isCorrect) {
+    answerElement.classList.add('correct');
+    showFeedback(true);
+  } else {
+    answerElement.classList.add('wrong');
+    correctAnswerElement.classList.add('correct'); // Highlight the correct answer
+    showFeedback(false);
+  }
+
+  setTimeout(() => {
+    reset();
+  }, 2000);
+}
+
+    function speakText(text) {
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'ja-JP';
+      window.speechSynthesis.speak(utterance);
+    }
+
+    function toggleClock() {
+      isAnalog = !isAnalog;
+      clockElement.style.display = isAnalog ? 'block' : 'none';
+      digitalClockElement.style.display = isAnalog ? 'none' : 'block';
+      toggleButton.textContent = isAnalog ? 'Switch to Digital Clock' : 'Switch to Analog Clock';
+    }
+
+    // Add clock ticks
+for (let i = 0; i < 60; i++) {
+  const tick = document.createElement('div');
+  const angle = i * 6;
+  const isHourTick = i % 5 === 0;
+  
+  tick.className = `tick ${isHourTick ? 'long-tick' : ''}`;
+  
+  // Convert angle to radians
+  const radian = (angle - 90) * (Math.PI / 180); // Subtract 90 to start from the top
+
+  // Calculate the top and left positions using trigonometry
+  const distanceFromCenter = 48; // Distance from the center to the ticks, could be adjusted for radius
+  const top = 50 + distanceFromCenter * Math.sin(radian); // Use sine for vertical position
+  const left = 50 + distanceFromCenter * Math.cos(radian); // Use cosine for horizontal position
+  
+  // Apply the calculated positions
+  tick.style.top = `${top}%`;
+  tick.style.left = `${left}%`;
+
+  // Set the transformation to rotate the ticks at the proper angle
+  tick.style.transform = `translate(-50%, -50%) rotate(${angle}deg)`;
+
+  clockElement.appendChild(tick);
+}
+
+
+    hintButton.addEventListener('click', () => {
+      const plainText = document.createElement('div');
+      plainText.innerHTML = correctAnswer;
+      speakText(plainText.textContent);
+    });
+    resetButton.addEventListener('click', reset);
+    toggleButton.addEventListener('click', toggleClock);
+
+    reset(); // Initialize the game
+  </script>
+</body>
+</html>
